@@ -23,7 +23,7 @@ namespace TournamentManager.API.Controllers
         public async Task<IActionResult> GetAllTournaments()
         {
             var tournaments = await _context.Tournaments
-                .Include(t => t.Organizer) 
+                .Include(t => t.Organizer)
                 .Select(t => new TournamentResponseDto
                 {
                     Id = t.Id,
@@ -38,6 +38,39 @@ namespace TournamentManager.API.Controllers
 
             return Ok(tournaments);
         }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetTournamentById(int id)
+        {
+            var tournament = await _context.Tournaments
+                .Include(t => t.Organizer)
+                .Include(t => t.Teams)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if(tournament == null)
+            {
+                return NotFound($"Tournament with ID {id} was not found.");
+            }
+
+            var response = new TournamentDetailResponseDto
+            {
+                Id = tournament.Id,
+                Name = tournament.Name,
+                Game = tournament.Game,
+                StartDate = tournament.StartDate,
+                MaxTeams = tournament.MaxTeams,
+                Status = tournament.Status,
+                OrganizerName = tournament.Organizer?.Username ?? "Unknown",
+                Teams = tournament.Teams?.Select(team => new TeamResponseDto
+                {
+                    Id = team.Id,
+                    Name = team.Name
+                }).ToList() ?? new List<TeamResponseDto>()
+            };
+            
+            return Ok(response);
+        }
+
 
         [HttpPost]
         [Authorize] 

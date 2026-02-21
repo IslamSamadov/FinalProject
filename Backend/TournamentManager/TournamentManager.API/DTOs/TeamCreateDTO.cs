@@ -2,7 +2,7 @@
 
 namespace TournamentManager.API.DTOs
 {
-    public class TeamCreateDTO
+    public class TeamCreateDto
     {
         [Required(ErrorMessage = "Team name is required.")]
         [MaxLength(50)]
