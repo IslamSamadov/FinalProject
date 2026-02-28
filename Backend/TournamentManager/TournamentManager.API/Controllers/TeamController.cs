@@ -23,6 +23,10 @@ namespace TournamentManager.API.Controllers
         [Authorize]
         public async Task<IActionResult> CreateTeam(TeamCreateDto request)
         {
+            // Find out exactly who is making this request
+            var userIdString = User.FindFirstValue("UserId");
+            if (!int.TryParse(userIdString, out var userId)) return Unauthorized();
+
             var tournament = await _context.Tournaments
                 .Include(t => t.Teams)
                 .FirstOrDefaultAsync(t => t.Id == request.TournamentId);
@@ -30,6 +34,12 @@ namespace TournamentManager.API.Controllers
             if(tournament == null)
             {
                 return NotFound(new {Error = $"Tournament with ID {request.TournamentId} was not found."});
+            }
+
+            // Checking if it is tournament organizer 
+            if (tournament.OrganizerId != userId)
+            {
+                return StatusCode(403, new { Error = "Only the tournament organizer can delete teams." });
             }
 
             int currentTeamCount = tournament.Teams?.Count ?? 0;
@@ -61,15 +71,17 @@ namespace TournamentManager.API.Controllers
             var userIdString = User.FindFirstValue("UserId");
             if(!int.TryParse(userIdString, out var userId)) return Unauthorized();
 
-            var team = await _context.Teams.FirstOrDefaultAsync(t => t.Id == id);
+            var team = await _context.Teams
+                    .Include(t => t.Tournament) 
+                    .FirstOrDefaultAsync(t => t.Id == id);
 
-            if(team == null)
+            if (team == null)
             {
                 return NotFound(new {Error = $"Team with ID {id} was not found."});
             }
 
             // Checking if it is tournament organizer 
-            if(team.Tournament.Organizer.Id != userId)
+            if(team.Tournament!.OrganizerId != userId)
             {
                 return StatusCode(403, new { Error = "Only the tournament organizer can delete teams." });
             }
