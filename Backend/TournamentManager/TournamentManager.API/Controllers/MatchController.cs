@@ -68,7 +68,7 @@ namespace TournamentManager.API.Controllers
                 roundOneMatches.Add(match);
             }
 
-            tournament.Status = "InProgress";
+            tournament.Status = "In progress";
             _context.Matches.AddRange(roundOneMatches);
             await _context.SaveChangesAsync();
             return Ok(new
